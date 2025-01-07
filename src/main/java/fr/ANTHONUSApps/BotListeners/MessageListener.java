@@ -22,6 +22,12 @@ public class MessageListener extends ListenerAdapter {
         if (event.getAuthor().isBot()) {
             return;
         }
+        if(!event.getChannel().getId().equals(Main.channelID)){
+            return;
+        }
+
+        System.out.println("Message reçu de "+event.getMember().getEffectiveName());
+
         String userMessage = event.getMessage().getContentRaw();
 
         switch (Main.loaded_model){
