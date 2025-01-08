@@ -19,7 +19,7 @@ import java.util.List;
 
 public class GPTClient extends AIClient {
 
-    private final int MAX_MESSAGES = 2;
+    private final int MAX_MESSAGES = 10;
     private final int MAX_TOKENS_SUMMARY = 2000;
     private final Path SUMMARY_FILE = Paths.get("gpt-summary.txt");
     private final Path CONTEXT_FILE = Paths.get("gpt-baseContext.txt");
