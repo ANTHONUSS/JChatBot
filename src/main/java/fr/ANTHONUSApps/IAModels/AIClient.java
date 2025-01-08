@@ -8,7 +8,9 @@ public abstract class AIClient {
     protected String API_URL;
     protected String API_KEY;
 
+    protected int MAX_TOKENS;
+
     protected OkHttpClient client = new OkHttpClient();
 
-    public abstract String getResponse(String query) throws IOException;
+    public abstract String getResponse(String query, String userName) throws IOException;
 }

@@ -16,7 +16,7 @@ public class GeminiClient extends AIClient {
     }
 
     @Override
-    public String getResponse(String query) throws IOException {
+    public String getResponse(String query, String userName) throws IOException {
         JsonObject json = new JsonObject();
         JsonArray contentsArray = new JsonArray();
         JsonObject partsObject = new JsonObject();
