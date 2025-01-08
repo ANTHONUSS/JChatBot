@@ -19,23 +19,18 @@ import java.util.List;
 
 public class GPTClient extends AIClient {
 
-    private final int MAX_MESSAGES = 10;
+    private final int MAX_MESSAGES = 2;
     private final int MAX_TOKENS_SUMMARY = 2000;
-    private final Path SUMMARY_FILE = Paths.get("gpt-summary.json");
+    private final Path SUMMARY_FILE = Paths.get("gpt-summary.txt");
+    private final Path CONTEXT_FILE = Paths.get("gpt-baseContext.txt");
 
     private final List<JsonObject> messageHistory = new ArrayList<>();
     private String latestSummary = "";
 
-    private final String baseContext = """
-            Tu es un bot Discord créé pour parler avec des utilisateurs de Discord.
-            Tu parleras comme une personne d'environ 20 ans.
-            Tu répondras uniquement en français sauf si on te demande explicitement de parler dans une autre langue.
-            Tu essaieras d'engager des discussions ou répondre à ce qu'on te dit.
-            Essaie de prendre le ton de mes amis, on aime beaucoup l'humour noire, et dès qu'on s'insulte c'est souvent pour rigoler.
-            """;
+    private final String baseContext = "";
     private final String summaryContext = """
             Tu es une IA utilisée pour assister un bot Discord dans ses conversations avec ses utilisateurs.
-            Crée un résumé de la conversation actuelle en combinant l'historique des messages récents et le résumé précédent.
+            Crée un résumé de la conversation actuelle en combinant l'historique des messages récents et le résumé précédent, ainsi que le context de base dans lequel le bot doit se comporter.
             Le résumé doit inclure les points importants de la conversation, les sujets abordés, et les informations spécifiques que les utilisateurs ont demandé à retenir.
             Soit concis dans le résumé, ne garde que les informations essentielles et n'écris pas des messages trop gros.
             """;
@@ -49,6 +44,12 @@ public class GPTClient extends AIClient {
             if (Files.exists(SUMMARY_FILE)) latestSummary = Files.readString(SUMMARY_FILE);
         } catch (IOException e) {
             System.err.println("Erreur lors du chargement du fichier " + SUMMARY_FILE + ": " + e.getMessage());
+        }
+
+        try {
+            if (Files.exists(CONTEXT_FILE)) latestSummary = Files.readString(CONTEXT_FILE);
+        } catch (IOException e) {
+            System.err.println("Erreur lors du chargement du fichier " + CONTEXT_FILE + ": " + e.getMessage());
         }
     }
 
@@ -127,8 +128,13 @@ public class GPTClient extends AIClient {
 
         JsonObject summaryMessage = new JsonObject();
         summaryMessage.addProperty("role", "system");
-        summaryMessage.addProperty("content", summaryContext);
+        summaryMessage.addProperty("content", "Contexte principal de ton rôle : "+summaryContext);
         messages.add(summaryMessage);
+
+        JsonObject contextMessage = new JsonObject();
+        contextMessage.addProperty("role", "system");
+        contextMessage.addProperty("content", "Voici le contexte auquel tu doit prendre compte pour faire le résumé : " + baseContext);
+        messages.add(contextMessage);
 
         if (!latestSummary.isEmpty()) {
             JsonObject previousSummary = new JsonObject();

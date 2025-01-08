@@ -43,4 +43,5 @@ bin/
 
 ### CUSTOM ###
 /.env
-/gpt-summary.json
+/gpt-summary.txt
+/gpt-baseContext.txt
