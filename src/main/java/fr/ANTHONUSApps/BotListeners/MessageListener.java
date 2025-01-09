@@ -18,6 +18,7 @@ public class MessageListener extends ListenerAdapter {
         this.gptClient = new GPTClient();
     }
 
+    @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) return;
 

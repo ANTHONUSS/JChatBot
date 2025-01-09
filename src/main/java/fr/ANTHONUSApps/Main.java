@@ -1,10 +1,13 @@
 package fr.ANTHONUSApps;
 
 import fr.ANTHONUSApps.BotListeners.MessageListener;
+import fr.ANTHONUSApps.BotListeners.SlashCommandListener;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 
 public class Main {
     public static String tokenIA;
@@ -63,18 +66,19 @@ public class Main {
             return;
         }
 
-        //Load discord channel id
-        channelID = dotenv.get("CHANNEL_ID");
-        if (channelID == null || channelID.isEmpty()) {
-            System.out.println("ID du channel discord .env");
-            return;
-        }
-
         //Load the bot
         JDA jda = JDABuilder.createDefault(tokenDiscord)
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .enableIntents(GatewayIntent.GUILD_MESSAGES)
                 .addEventListeners(new MessageListener())
+                .addEventListeners(new SlashCommandListener())
                 .build();
+
+        //Load the slash commands
+        CommandListUpdateAction commands = jda.updateCommands();
+        commands.addCommands(
+                Commands.slash("activate", "Activer le bot dans ce salon (désactivera le bot dans le salon précédent si déjà activé auparavant)")
+        );
+        commands.queue();
     }
 }
