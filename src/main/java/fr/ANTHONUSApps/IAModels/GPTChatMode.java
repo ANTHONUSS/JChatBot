@@ -2,10 +2,7 @@ package fr.ANTHONUSApps.IAModels;
 
 import com.google.gson.*;
 import fr.ANTHONUSApps.Main;
-import okhttp3.MediaType;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import okhttp3.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,7 +12,13 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GPTClient extends AIClient {
+public class GPTChatMode {
+
+    private final String API_URL;
+    private final String API_KEY;
+    private final int MAX_TOKENS;
+
+    protected OkHttpClient client;
 
     private final int MAX_MESSAGES = 10;
     private final int MAX_TOKENS_SUMMARY = 2000;
@@ -38,10 +41,11 @@ public class GPTClient extends AIClient {
             - Écris également bien ce que les utilisateurs ont demandé explicitement de retenir.
             """;
 
-    public GPTClient() {
+    public GPTChatMode() {
         this.API_URL = "https://api.openai.com/v1/chat/completions";
         this.API_KEY = Main.tokenIA;
         this.MAX_TOKENS = 500;
+        this.client = new OkHttpClient();
 
         try {
             if (Files.exists(SUMMARY_FILE)) {
@@ -62,7 +66,6 @@ public class GPTClient extends AIClient {
         }
     }
 
-    @Override
     public String getResponse(String query, String userName) throws IOException {
         addMessageToHistory("user", query, userName);
 
