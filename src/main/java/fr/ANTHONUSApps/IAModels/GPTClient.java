@@ -1,8 +1,6 @@
 package fr.ANTHONUSApps.IAModels;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import fr.ANTHONUSApps.Main;
 import okhttp3.MediaType;
 import okhttp3.Request;
@@ -19,20 +17,25 @@ import java.util.List;
 
 public class GPTClient extends AIClient {
 
-    private final int MAX_MESSAGES = 10;
+    private final int MAX_MESSAGES = 3;
     private final int MAX_TOKENS_SUMMARY = 2000;
     private final Path SUMMARY_FILE = Paths.get("gpt-summary.txt");
     private final Path CONTEXT_FILE = Paths.get("gpt-baseContext.txt");
 
     private final List<JsonObject> messageHistory = new ArrayList<>();
     private String latestSummary = "";
-
-    private final String baseContext = "";
+    private String baseContext = "";
     private final String summaryContext = """
+            Voici ton but principal en tant qu'IA :
             Tu es une IA utilisée pour assister un bot Discord dans ses conversations avec ses utilisateurs.
-            Crée un résumé de la conversation actuelle en combinant l'historique des messages récents et le résumé précédent, ainsi que le context de base dans lequel le bot doit se comporter.
-            Le résumé doit inclure les points importants de la conversation, les sujets abordés, et les informations spécifiques que les utilisateurs ont demandé à retenir.
-            Soit concis dans le résumé, ne garde que les informations essentielles et n'écris pas des messages trop gros.
+            
+            - Crée un résumé de la conversation actuelle en combinant le contexte de base du bot discord, le résumé précédents puis enfin l'historique des messages.
+            - Le résumé doit inclure le plus d'informations possibles par rapport à l'ancien résumé et l'historique des messages.
+            - Le résumé doit être écris du point de vue du bot discord, comme si c'est lui qui l'avais écris pour lui même plus tard.
+            - N'hésite pas à faire des résumés d'une certaine taille si il le faut, pour retenir toutes les informations depuis le début de la conversation.
+            - Le résumé doit également prendre la façon de parler et la personnalité du bot de base.
+            - Fais bien attention d'écrire dans le résumé les noms des utilisateurs ainsi qu'un petit résumé individuel sur chacun d'eux.
+            - Écris également bien ce que les utilisateurs ont demandé explicitement de retenir.
             """;
 
     public GPTClient() {
@@ -41,13 +44,19 @@ public class GPTClient extends AIClient {
         this.MAX_TOKENS = 500;
 
         try {
-            if (Files.exists(SUMMARY_FILE)) latestSummary = Files.readString(SUMMARY_FILE);
+            if (Files.exists(SUMMARY_FILE)) {
+                latestSummary = Files.readString(SUMMARY_FILE);
+                System.out.println("Fichier " + SUMMARY_FILE + " lu, voici son contenu : " + latestSummary);
+            }
         } catch (IOException e) {
             System.err.println("Erreur lors du chargement du fichier " + SUMMARY_FILE + ": " + e.getMessage());
         }
 
         try {
-            if (Files.exists(CONTEXT_FILE)) latestSummary = Files.readString(CONTEXT_FILE);
+            if (Files.exists(CONTEXT_FILE)) {
+                baseContext = Files.readString(CONTEXT_FILE);
+                System.out.println("Fichier " + CONTEXT_FILE + " lu, voici son contenu : " + baseContext);
+            }
         } catch (IOException e) {
             System.err.println("Erreur lors du chargement du fichier " + CONTEXT_FILE + ": " + e.getMessage());
         }
@@ -71,6 +80,9 @@ public class GPTClient extends AIClient {
                 .post(body)
                 .build();
 
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        System.out.println("Message envoyé à l'IA : " + gson.toJson(json));
+
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 throw new IOException("Erreur API " + response);
@@ -82,7 +94,7 @@ public class GPTClient extends AIClient {
             String assistantResponse = responseJson.getAsJsonArray("choices").get(0).getAsJsonObject()
                     .getAsJsonObject("message").get("content").getAsString();
 
-            addMessageToHistory("assistant", assistantResponse, null);
+            addMessageToHistory("assistant", assistantResponse, "Discord Bot");
 
             if (messageHistory.size() > MAX_MESSAGES) generateSummary();
 
@@ -97,6 +109,8 @@ public class GPTClient extends AIClient {
         if (role.equals("user") && userName != null) content = userName + ": " + content;
         message.addProperty("content", content);
         messageHistory.add(message);
+
+        System.out.println("Message ajouté à l'historique : " + content);
     }
 
     private JsonArray buildMessageContext() {
@@ -128,12 +142,12 @@ public class GPTClient extends AIClient {
 
         JsonObject summaryMessage = new JsonObject();
         summaryMessage.addProperty("role", "system");
-        summaryMessage.addProperty("content", "Contexte principal de ton rôle : "+summaryContext);
+        summaryMessage.addProperty("content", summaryContext);
         messages.add(summaryMessage);
 
         JsonObject contextMessage = new JsonObject();
         contextMessage.addProperty("role", "system");
-        contextMessage.addProperty("content", "Voici le contexte auquel tu doit prendre compte pour faire le résumé : " + baseContext);
+        contextMessage.addProperty("content", baseContext);
         messages.add(contextMessage);
 
         if (!latestSummary.isEmpty()) {
@@ -153,6 +167,9 @@ public class GPTClient extends AIClient {
                 .addHeader("Authorization", "Bearer " + API_KEY)
                 .post(body)
                 .build();
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        System.out.println("Message envoyé à l'IA POUR LE RESUME : " + gson.toJson(json));
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
