@@ -22,8 +22,8 @@ public class GPTChatMode {
 
     private final int MAX_MESSAGES = 10;
     private final int MAX_TOKENS_SUMMARY = 2000;
-    private final Path SUMMARY_FILE = Paths.get("gpt-summary.txt");
-    private final Path CONTEXT_FILE = Paths.get("gpt-baseContext.txt");
+    private final Path SUMMARY_FILE = Paths.get("Data/gpt-summary.txt");
+    private final Path CONTEXT_FILE = Paths.get("Data/gpt-baseContext.txt");
 
     private final List<JsonObject> messageHistory = new ArrayList<>();
     private String latestSummary = "";
